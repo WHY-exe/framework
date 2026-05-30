@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.11...3.20)
+add_subdirectory(ADV)
+add_subdirectory(boost)
+add_subdirectory(breakpad)
+add_subdirectory(spdlog)

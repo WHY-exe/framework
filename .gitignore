@@ -1,0 +1,11 @@
+# ignore output binaries
+compile_commands.json
+# ignore cmake generate files
+*Makefile
+# ignore cmake cahe files
+*CMakeFiles/
+# ignore vscode settings file
+# .vscode/
+.vs/
+out/
+.cache/
