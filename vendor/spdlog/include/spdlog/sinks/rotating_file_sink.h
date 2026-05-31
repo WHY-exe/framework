@@ -19,7 +19,7 @@ namespace sinks {
 // Rotating file sink based on size
 //
 template <typename Mutex>
-class rotating_file_sink final : public base_sink<Mutex> {
+class rotating_file_sink : public base_sink<Mutex> {
 public:
     rotating_file_sink(filename_t base_filename,
                        std::size_t max_size,
@@ -32,6 +32,8 @@ public:
 protected:
     void sink_it_(const details::log_msg &msg) override;
     void flush_() override;
+    void to_file(memory_buf_t buf, size_t new_size);
+    size_t get_current_size() const noexcept;
 
 private:
     // Rotate files:

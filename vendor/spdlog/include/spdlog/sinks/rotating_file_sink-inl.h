@@ -75,6 +75,11 @@ SPDLOG_INLINE void rotating_file_sink<Mutex>::sink_it_(const details::log_msg &m
     base_sink<Mutex>::formatter_->format(msg, formatted);
     auto new_size = current_size_ + formatted.size();
 
+    to_file(std::move(formatted), new_size);
+}
+
+template <typename Mutex>
+SPDLOG_INLINE void rotating_file_sink<Mutex>::to_file(memory_buf_t buf, size_t new_size) {
     // rotate if the new estimated file size exceeds max size.
     // rotate only if the real size > 0 to better deal with full disk (see issue #2261).
     // we only check the real size when new_size > max_size_ because it is relatively expensive.
@@ -82,11 +87,16 @@ SPDLOG_INLINE void rotating_file_sink<Mutex>::sink_it_(const details::log_msg &m
         file_helper_.flush();
         if (file_helper_.size() > 0) {
             rotate_();
-            new_size = formatted.size();
+            new_size = buf.size();
         }
     }
-    file_helper_.write(formatted);
+    file_helper_.write(buf);
     current_size_ = new_size;
+}
+
+template <typename Mutex>
+SPDLOG_INLINE size_t rotating_file_sink<Mutex>:: get_current_size() const noexcept {
+    return current_size_;
 }
 
 template <typename Mutex>

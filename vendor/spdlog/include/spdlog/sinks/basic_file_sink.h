@@ -17,7 +17,7 @@ namespace sinks {
  * Trivial file sink with single file as target
  */
 template <typename Mutex>
-class basic_file_sink final : public base_sink<Mutex> {
+class basic_file_sink : public base_sink<Mutex> {
 public:
     explicit basic_file_sink(const filename_t &filename,
                              bool truncate = false,
@@ -27,6 +27,7 @@ public:
 protected:
     void sink_it_(const details::log_msg &msg) override;
     void flush_() override;
+    void to_file(memory_buf_t formatted); 
 
 private:
     details::file_helper file_helper_;

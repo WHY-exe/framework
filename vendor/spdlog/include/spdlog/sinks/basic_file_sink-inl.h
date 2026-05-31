@@ -30,6 +30,11 @@ template <typename Mutex>
 SPDLOG_INLINE void basic_file_sink<Mutex>::sink_it_(const details::log_msg &msg) {
     memory_buf_t formatted;
     base_sink<Mutex>::formatter_->format(msg, formatted);
+    to_file(std::move(formatted));
+}
+
+template <typename Mutex>
+SPDLOG_INLINE void basic_file_sink<Mutex>::to_file(memory_buf_t formatted) {
     file_helper_.write(formatted);
 }
 
