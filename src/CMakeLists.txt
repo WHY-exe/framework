@@ -31,7 +31,9 @@ target_link_libraries(${PROJECT_NAME}
         Boost::system
         Boost::thread
         breakpad_client
+        crypto
         spdlog::spdlog
+        ssl
 )
 
 # setting up compile flags
