@@ -10,8 +10,6 @@
       "installDir": "${sourceDir}/out/install/",
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
-        "BUILD_UTILS": false,
-        "ASSIMP_BUILD_TESTS": false,
         "BUILD_SHARED_LIBS": false
       }
     },
