@@ -14,7 +14,7 @@ using std::wstring;
 
 namespace google_breakpad {
 
-static bool SymUploadV2ProtocolSend(const wchar_t* api_url,
+bool SymUploadV2ProtocolSend(const wchar_t* api_url,
                                     const wchar_t* api_key,
                                     int* timeout_ms,
                                     const wstring& debug_file,

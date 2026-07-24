@@ -3,18 +3,6 @@ project(breakpad
     VERSION 2022.07.12 
     LANGUAGES CXX)
 
-if (MSVC)
-    add_definitions(
-        -DNOMINMAX
-        -DUNICODE
-        -DWIN32_LEAN_AND_MEAN
-        -D_CRT_SECURE_NO_WARNINGS
-        -D_CRT_SECURE_NO_DEPRECATE
-        -D_CRT_NONSTDC_NO_DEPRECATE
-        -D_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
-    )
-endif()
-
 set(CMAKE_DEBUG_POSTFIX d)
 
 option(BUILD_CLIENT_ONLY "only build libbreakpad_client" ON)
@@ -153,6 +141,19 @@ endif()
 
 add_library(breakpad_client ${LIBBREAKPAD_CLIENT_SOURCES})
 if(WIN32)
+    if (MSVC)
+        target_compile_definitions(breakpad_client PRIVATE
+            -DNOMINMAX
+            -DUNICODE
+            -DWIN32_LEAN_AND_MEAN
+            -D_CRT_SECURE_NO_WARNINGS
+            -D_CRT_SECURE_NO_DEPRECATE
+            -D_CRT_NONSTDC_NO_DEPRECATE
+            -D_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
+        )
+    elseif (MINGW)
+        target_compile_options(breakpad_client PRIVATE -municode)
+    endif()
     target_link_libraries(breakpad_client PRIVATE wininet.lib)
 elseif(APPLE)
     find_library(CoreFoundation_FRAMEWORK CoreFoundation)
