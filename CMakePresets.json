@@ -98,6 +98,49 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
+    },
+    {
+      "name": "win-mingw-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+          "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install",
+          "CMAKE_C_COMPILER": "gcc",
+          "CMAKE_CXX_COMPILER": "g++",
+          "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+          "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/mingw.cmake"
+      }
+    },
+    {
+        "name": "win32-mingw-rel",
+        "inherits": "win-mingw-base",
+        "cacheVariables": {
+            "CMAKE_C_COMPILER": "i686-w64-mingw32-gcc",
+            "CMAKE_CXX_COMPILER": "i686-w64-mingw32-g++",
+            "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        }
+    },
+    {
+        "name": "win32-mingw-deb",
+        "inherits": "win-mingw-base",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Debug"
+        }
+    },
+    {
+        "name": "win64-mingw-rel",
+        "inherits": "win-mingw-base",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        }
+    },
+    {
+        "name": "win64-mingw-deb",
+        "inherits": "win-mingw-base",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Debug"
+        }
     }
   ],
   "buildPresets": [

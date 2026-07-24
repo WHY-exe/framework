@@ -35,12 +35,6 @@ set(STRIP_DIR   ${CMAKE_INSTALL_PREFIX}/${PROJECT_VERSION}/${CMAKE_SYSTEM_NAME}/
 set(SYM_DIR     ${CMAKE_INSTALL_PREFIX}/${PROJECT_VERSION}/${CMAKE_SYSTEM_NAME}/sym/${ARCH})
 
 if (WIN32)
-    install(
-        FILES 
-            $<TARGET_PDB_FILE:${PROJECT_NAME}>
-        DESTINATION ${SYM_DIR}
-        OPTIONAL)
-
     add_custom_target(DumpSymForBreakpad
         WORKING_DIRECTORY "${SYM_DIR}"
         USES_TERMINAL
@@ -50,6 +44,25 @@ if (WIN32)
         COMMAND ${DUMP_SYMS_EXE} "./${PROJECT_NAME}.pdb" > "${SYM_DIR}/${PROJECT_NAME}.sym"
         DEPENDS install
     )
+    if (MSVC) 
+        install(
+            FILES 
+                $<TARGET_PDB_FILE:${PROJECT_NAME}>
+            DESTINATION ${SYM_DIR}
+            OPTIONAL)
+    else()
+        get_target_property(target_type ${PROJECT_NAME} TYPE)
+        set(TARGET_POSTFIX exe)
+        if(target_type STREQUAL "SHARED_LIBRARY")
+            set(TARGET_POSTFIX dll)
+        endif()
+        add_custom_target(StripDebugInfo
+            WORKING_DIRECTORY ${INSTALL_DIR}
+            USES_TERMINAL
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${STRIP_DIR}
+            COMMAND ${CMAKE_STRIP} -s ${PROJECT_NAME}.${TARGET_POSTFIX} -o ${STRIP_DIR}/${PROJECT_NAME}.${TARGET_POSTFIX})
+    endif()
+
 endif()
 
 if (IOS)
@@ -74,8 +87,6 @@ if (IOS)
 endif()
 
 if (ANDROID)
-    set (STRIP_LOCATION ${CMAKE_ANDROID_NDK}/toolchains/llvm/prebuilt/windows-x86_64/bin/llvm-strip.exe)
-
     add_custom_target(DumpSymForBreakpad
         WORKING_DIRECTORY ${INSTALL_DIR}
         USES_TERMINAL
@@ -95,6 +106,6 @@ endif()
 
 # Set target folders for IDE organization
 set_property(TARGET DumpSymForBreakpad PROPERTY FOLDER "SymUtils")
-if (NOT WIN32)
+if (NOT MSVC)
     set_property(TARGET StripDebugInfo PROPERTY FOLDER "SymUtils")
 endif()
