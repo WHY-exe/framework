@@ -26,6 +26,6 @@ public:
     const uint8_t& operator[](size_t index) const;
 
 private:
-    void* m_buffer = nullptr;
+    void* buffer_ = nullptr;
 };
 }  // namespace misc

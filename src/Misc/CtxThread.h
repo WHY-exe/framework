@@ -28,17 +28,17 @@ public:
 	bool IsStop() const noexcept;
 
 	inline operator Context&() {
-		return m_ioCtx;
+		return ioCtx_;
 	}
 
 	inline Executor GetExecutor() {
-		return m_ioCtx.get_executor();
+		return ioCtx_.get_executor();
 	}
 
 private:
-	std::atomic_bool m_bStop;
-	boost::thread	 m_thread;
-	Context			 m_ioCtx;
-	WorkGuardPtr	 m_ctxGuard;
+	std::atomic_bool bStop_;
+	boost::thread	 thread_;
+	Context			 ioCtx_;
+	WorkGuardPtr	 ctxGuard_;
 };
 } //namespace misc

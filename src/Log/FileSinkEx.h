@@ -8,6 +8,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 
 #include <string>
+#include "Encrypt/Aes.h"
 
 namespace spdlog {
 namespace sinks {
@@ -29,8 +30,7 @@ protected:
 	void flush_() override;
 
 private:
-	bool		encrypt_enable_;
-	std::string encryption_key_;
+	std::unique_ptr<AES> aes_;
 };
 
 using FileSinkExMt = FileSinkEx<std::mutex>;

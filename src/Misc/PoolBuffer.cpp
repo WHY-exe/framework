@@ -3,12 +3,12 @@
 
 namespace misc {
 PoolBuffer::PoolBuffer()
-	: m_buffer(MemPool::malloc()) {
+	: buffer_(MemPool::malloc()) {
 }
 
 PoolBuffer::~PoolBuffer() noexcept {
-	if (m_buffer != nullptr) {
-		MemPool::free(m_buffer);
+	if (buffer_ != nullptr) {
+		MemPool::free(buffer_);
 	}
 }
 
@@ -17,31 +17,31 @@ PoolBuffer::PoolBuffer(PoolBuffer&& rhs) noexcept {
 }
 
 PoolBuffer& PoolBuffer::operator=(PoolBuffer&& rhs) noexcept {
-	m_buffer	 = rhs.m_buffer;
-	rhs.m_buffer = nullptr;
+	buffer_	 = rhs.buffer_;
+	rhs.buffer_ = nullptr;
 	return *this;
 }
 
 void* PoolBuffer::Ptr() noexcept {
-	return m_buffer;
+	return buffer_;
 }
 
 const void* PoolBuffer::Ptr() const noexcept {
-	return m_buffer;
+	return buffer_;
 }
 
 uint8_t& PoolBuffer::operator[](size_t index) {
 	if (index >= MEM_POOL_CHUNK) {
-		throw std::length_error("[misc::Data] index excced boundary");
+		throw std::length_error("[misc::PoolBuffer] index excced boundary");
 	}
-	return ((uint8_t*)m_buffer)[index];
+	return ((uint8_t*)buffer_)[index];
 }
 
 const uint8_t& PoolBuffer::operator[](size_t index) const {
 	if (index >= MEM_POOL_CHUNK) {
-		throw std::length_error("[misc::Data] index excced boundary");
+		throw std::length_error("[misc::PoolBuffer] index excced boundary");
 	}
-	return ((uint8_t*)m_buffer)[index];
+	return ((uint8_t*)buffer_)[index];
 }
 
 } //namespace misc

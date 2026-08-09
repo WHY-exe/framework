@@ -30,6 +30,7 @@ target_link_libraries(${PROJECT_NAME}
         Boost::filesystem
         Boost::system
         Boost::thread
+        Microsoft.GSL::GSL
         breakpad_client
         crypto
         spdlog::spdlog

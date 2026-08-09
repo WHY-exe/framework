@@ -23,11 +23,12 @@ SPDLOG_INLINE RotationFileSinkEx<Mutex>::RotationFileSinkEx(
 	const file_event_handlers& event_handlers,
 	bool					   encrypt_enable,
 	std::string				   encryption_key)
-	: rotating_file_sink<Mutex>(base_filename, max_size, max_files, rotate_on_open, event_handlers)
-	, encrypt_enable_(encrypt_enable)
-	, encryption_key_(std::move(encryption_key)) {
-	if (encrypt_enable_ && encryption_key_.empty()) {
+	: rotating_file_sink<Mutex>(base_filename, max_size, max_files, rotate_on_open, event_handlers) {
+	if (encrypt_enable && encryption_key.empty()) {
 		throw std::logic_error("encrypt key not set");
+	}
+	if (encrypt_enable) {
+		aes_ = std::make_unique<AES>(encryption_key, encryption_key);
 	}
 }
 
@@ -35,6 +36,17 @@ template <typename Mutex>
 SPDLOG_INLINE void RotationFileSinkEx<Mutex>::sink_it_(const details::log_msg& msg) {
 	memory_buf_t formatted;
 	base_sink<Mutex>::formatter_->format(msg, formatted);
+	
+	if (aes_ != nullptr) {
+		auto inputSize = formatted.size();
+		formatted.resize(AES::GetRequireBufferSize(inputSize));
+		auto [ret, ec] = aes_->Encrypt(
+			gsl::span<const uint8_t>((uint8_t*)formatted.data(), inputSize), gsl::span<uint8_t>((uint8_t*)formatted.data(), formatted.size()));
+		if (ec) {
+			return;
+		}
+		formatted.resize(ret.size());
+	}
 	auto new_size = rotating_file_sink<Mutex>::get_current_size() + formatted.size();
 	rotating_file_sink<Mutex>::to_file(std::move(formatted), new_size);
 }

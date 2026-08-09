@@ -5,7 +5,7 @@
 
 int main() {
     using tcp = boost::asio::ip::tcp;
-
+    
     dmphelper::Client::Instancitiate(DMP_PATH("./dmp"));
 
     Log::Config config{};

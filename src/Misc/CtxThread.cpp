@@ -2,10 +2,10 @@
 
 namespace misc {
 CtxThread::CtxThread()
-	: m_bStop(true)
-	, m_thread()
-	, m_ioCtx()
-	, m_ctxGuard(std::make_unique<WorkGuard>(m_ioCtx.get_executor())) {
+	: bStop_(true)
+	, thread_()
+	, ioCtx_()
+	, ctxGuard_(std::make_unique<WorkGuard>(ioCtx_.get_executor())) {
 }
 
 CtxThread::~CtxThread() noexcept {
@@ -13,23 +13,23 @@ CtxThread::~CtxThread() noexcept {
 }
 
 bool CtxThread::Start(Token token) {
-	if (!m_bStop.exchange(false)) {
+	if (!bStop_.exchange(false)) {
 		return false;
 	}
-	if (m_thread.joinable()) {
-		m_thread.join();
+	if (thread_.joinable()) {
+		thread_.join();
 	}
-	if (m_ioCtx.stopped()) {
-		m_ioCtx.restart();
+	if (ioCtx_.stopped()) {
+		ioCtx_.restart();
 	}
-	if (!m_ctxGuard) {
-		m_ctxGuard = std::make_unique<WorkGuard>(m_ioCtx.get_executor());
+	if (!ctxGuard_) {
+		ctxGuard_ = std::make_unique<WorkGuard>(ioCtx_.get_executor());
 	}
 
-	m_thread = boost::thread(
+	thread_ = boost::thread(
 		[this](Token token) {
 			try {
-				m_ioCtx.run();
+				ioCtx_.run();
 				if (token) {
 					token(nullptr);
 				}
@@ -38,24 +38,24 @@ bool CtxThread::Start(Token token) {
 					token(std::current_exception());
 				}
 			}
-			m_bStop = true;
+			bStop_ = true;
 		},
 		std::move(token));
 	return true;
 }
 
 bool CtxThread::IsStop() const noexcept {
-	return m_bStop;
+	return bStop_;
 }
 
 bool CtxThread::Stop() noexcept {
-	if (m_bStop.exchange(true)) {
+	if (bStop_.exchange(true)) {
 		return false;
 	}
 	try {
-		m_ctxGuard->reset();
-		if (m_thread.joinable()) {
-			m_thread.join();
+		ctxGuard_->reset();
+		if (thread_.joinable()) {
+			thread_.join();
 		}
 	} catch (...) {
 		return false;
