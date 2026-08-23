@@ -7,6 +7,7 @@ using namespace boost::system;
 AES::AES(std::string key, std::string iv)
 	: key_(std::move(key))
 	, iv_(std::move(iv)) {
+	key_.resize(32, '\0');
 }
 
 Result<gsl::span<uint8_t>> AES::Encrypt(gsl::span<const uint8_t> input, gsl::span<uint8_t> output) {

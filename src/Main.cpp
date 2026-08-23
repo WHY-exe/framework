@@ -8,7 +8,9 @@ int main() {
     
     dmphelper::Client::Instancitiate(DMP_PATH("./dmp"));
 
-    Log::Config config{};
+    Log::Config config;
+    config.enctyptEnable = true;
+    config.encrptKey = "1234567890123456";
     Log::Init(config);
 
     LOGI("hello world");

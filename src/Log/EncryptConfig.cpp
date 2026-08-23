@@ -31,6 +31,15 @@ const filename_t& EncryptionConfig::GetFileName() const {
 	return m_filename;
 }
 
+filename_t EncryptionConfig::ToFilenameString(const std::string& value) {
+#ifdef  SPDLOG_WCHAR_FILENAMES
+    return filename_t(value.begin(), value.end());
+#else
+    return value;
+#endif
+}
+
+
 filename_t EncryptionConfig::GenPath() {
 	filename_t basename;
 	filename_t ext;

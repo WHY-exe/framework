@@ -45,18 +45,21 @@ SPDLOG_INLINE void RotationFileSinkEx<Mutex>::sink_it_(const details::log_msg& m
 	memory_buf_t formatted;
 	base_sink<Mutex>::formatter_->format(msg, formatted);
 
+	memory_buf_t ouputBuf;
 	if (aes_ != nullptr) {
 		auto inputSize = formatted.size();
-		formatted.resize(AES::GetRequireBufferSize(inputSize));
+		ouputBuf.resize(AES::GetRequireBufferSize(inputSize));
 		auto ret = aes_->Encrypt(
-			gsl::span<const uint8_t>((uint8_t*)formatted.data(), inputSize), gsl::span<uint8_t>((uint8_t*)formatted.data(), formatted.size()));
+			gsl::span<const uint8_t>((uint8_t*)formatted.data(), inputSize), gsl::span<uint8_t>((uint8_t*)ouputBuf.data(), ouputBuf.size()));
 		if (!ret) {
 			throw spdlog_ex("encryption failed");
 		}
-		formatted.resize(ret->size());
+		ouputBuf.resize(ret->size());
+	} else {
+		ouputBuf = std::move(formatted);
 	}
 	auto new_size = rotating_file_sink<Mutex>::get_current_size() + formatted.size();
-	rotating_file_sink<Mutex>::to_file(std::move(formatted), new_size);
+	rotating_file_sink<Mutex>::to_file(std::move(ouputBuf), new_size);
 }
 
 template <typename Mutex>
