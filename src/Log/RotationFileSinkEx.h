@@ -4,11 +4,13 @@
 #pragma once
 
 #include <spdlog/sinks/rotating_file_sink.h>
+#include <memory>
 #include <mutex>
 #include <string>
+#include <utility>
 
 #include "Encrypt/Aes.h"
-
+#include "EncryptConfig.h"
 
 namespace spdlog {
 namespace sinks {
@@ -32,6 +34,13 @@ protected:
 	void flush_() override;
 
 private:
+	RotationFileSinkEx(
+		std::size_t max_size,
+		std::size_t max_files,
+		bool rotate_on_open,
+		const file_event_handlers& event_handlers,
+		EncryptionConfig enc_config);
+
 	std::unique_ptr<AES> aes_;
 };
 

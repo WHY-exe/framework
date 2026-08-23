@@ -7,8 +7,12 @@
 #include <spdlog/details/synchronous_factory.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
+#include <memory>
+#include <mutex>
 #include <string>
+#include <utility>
 #include "Encrypt/Aes.h"
+#include "EncryptConfig.h"
 
 namespace spdlog {
 namespace sinks {
@@ -30,6 +34,11 @@ protected:
 	void flush_() override;
 
 private:
+	FileSinkEx(
+		bool truncate,
+		const file_event_handlers& event_handlers,
+		EncryptionConfig enc_config);
+
 	std::unique_ptr<AES> aes_;
 };
 

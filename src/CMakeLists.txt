@@ -30,11 +30,12 @@ target_link_libraries(${PROJECT_NAME}
         Boost::filesystem
         Boost::system
         Boost::thread
-        Microsoft.GSL::GSL
         breakpad_client
+        Microsoft.GSL::GSL
         crypto
-        spdlog::spdlog
         ssl
+        spdlog::spdlog
+        tl::expected
 )
 
 # setting up compile flags

@@ -1,9 +1,11 @@
 #include "FileSinkEx.h"
+#include <openssl/rand.h>
 #include <spdlog/common.h>
+#include <spdlog/details/file_helper.h>
 #include <spdlog/details/os.h>
 
-template class SPDLOG_API spdlog::sinks::FileSinkEx<std::mutex>;
-template class SPDLOG_API spdlog::sinks::FileSinkEx<spdlog::details::null_mutex>;
+#include <tuple>
+#include <utility>
 
 namespace spdlog {
 namespace sinks {
@@ -15,12 +17,17 @@ SPDLOG_INLINE FileSinkEx<Mutex>::FileSinkEx(
 	const file_event_handlers& event_handlers,
 	bool					   encrypt_enable,
 	std::string				   encryption_key)
-	: basic_file_sink<Mutex>(filename, truncate, event_handlers) {
-	if (encrypt_enable && encryption_key.empty()) {
-		throw std::logic_error("encrypt key not set");
-	}
-	if (encrypt_enable) {
-		aes_ = std::make_unique<AES>(encryption_key, encryption_key);
+	: FileSinkEx(truncate, event_handlers, EncryptionConfig::Make(std::move(encryption_key), std::move(filename), encrypt_enable)) {
+}
+
+template <typename Mutex>
+SPDLOG_INLINE FileSinkEx<Mutex>::FileSinkEx(
+	bool					   truncate,
+	const file_event_handlers& event_handlers,
+	EncryptionConfig		   enc_config)
+	: basic_file_sink<Mutex>(enc_config.GetFileName(), truncate, event_handlers) {
+	if (enc_config) {
+		aes_ = std::make_unique<AES>(enc_config.GetKey(), enc_config.GetIV());
 	}
 }
 
@@ -32,12 +39,12 @@ SPDLOG_INLINE void FileSinkEx<Mutex>::sink_it_(const details::log_msg& msg) {
 	if (aes_ != nullptr) {
 		auto inputSize = formatted.size();
 		formatted.resize(AES::GetRequireBufferSize(inputSize));
-		auto [ret, ec] = aes_->Encrypt(
+		auto ret = aes_->Encrypt(
 			gsl::span<const uint8_t>((uint8_t*)formatted.data(), inputSize), gsl::span<uint8_t>((uint8_t*)formatted.data(), formatted.size()));
-		if (ec) {
-			return;
+		if (!ret) {
+			throw spdlog_ex("encryption failed");
 		}
-		formatted.resize(ret.size());
+		formatted.resize(ret->size());
 	}
 
 	basic_file_sink<Mutex>::to_file(std::move(formatted));
@@ -50,3 +57,6 @@ SPDLOG_INLINE void FileSinkEx<Mutex>::flush_() {
 
 } // namespace sinks
 } // namespace spdlog
+
+template class SPDLOG_API spdlog::sinks::FileSinkEx<std::mutex>;
+template class SPDLOG_API spdlog::sinks::FileSinkEx<spdlog::details::null_mutex>;
