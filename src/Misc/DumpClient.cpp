@@ -28,7 +28,7 @@ Client::Client(String strDumpPath OPT_ARGS_IMPL)
 	}
 #endif
 #if defined(__ANDROID__) || defined(__OHOS__) || (__linux__)
-	m_descriptor = std::make_unique<gb::MinidumpDescriptor>(strDumpPath_);
+	descriptor_ = std::make_unique<gb::MinidumpDescriptor>(strDumpPath_);
 #endif
 	eh_ = std::unique_ptr<gb::ExceptionHandler>(new gb::ExceptionHandler(
 #if defined(WIN32)
@@ -41,7 +41,7 @@ Client::Client(String strDumpPath OPT_ARGS_IMPL)
 		pipeName,
 		clientInfo_.count == 0 ? nullptr : &clientInfo_
 #elif defined(__ANDROID__) || defined(__OHOS__)
-		*m_descriptor,
+		*descriptor_,
 		nullptr,
 		DumpCallback,
 		nullptr,

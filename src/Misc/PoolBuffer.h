@@ -4,9 +4,9 @@
 #include <cstdint>
 
 namespace misc {
-struct PoolTag_ {};
+struct PoolTag {};
 
-using MemPool = boost::singleton_pool<PoolTag_, MEM_POOL_CHUNK>;
+using MemPool = boost::singleton_pool<PoolTag, MEM_POOL_CHUNK>;
 
 class PoolBuffer {
 public:

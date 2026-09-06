@@ -74,7 +74,7 @@ private:
 	GBCustomInfos		 infos_;
 	gb::CustomClientInfo clientInfo_;
 #elif defined(__ANDROID__) || defined(__OHOS__)
-	GBDescriptor m_descriptor;
+	GBDescriptor descriptor_;
 #endif
 };
 } // namespace dmphelper

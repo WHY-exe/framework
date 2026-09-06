@@ -12,23 +12,23 @@ EncryptionConfig EncryptionConfig::Make(std::string key, filename_t filename, bo
 }
 
 EncryptionConfig::EncryptionConfig(std::string key, filename_t filename, bool enabled)
-	: m_filename(std::move(filename))
-	, m_key(std::move(key))
-	, m_iv(misc::ToHex(GenIV()))
-	, m_enable(enabled) {
-	m_filename = GenPath();
+	: filename_(std::move(filename))
+	, key_(std::move(key))
+	, iv_(misc::ToHex(GenIV()))
+	, enable_(enabled) {
+	filename_ = GenPath();
 }
 
 const std::string& EncryptionConfig::GetKey() const {
-	return m_key;
+	return key_;
 }
 
 const std::string& EncryptionConfig::GetIV() const {
-	return m_iv;
+	return iv_;
 }
 
 const filename_t& EncryptionConfig::GetFileName() const {
-	return m_filename;
+	return filename_;
 }
 
 filename_t EncryptionConfig::ToFilenameString(const std::string& value) {
@@ -43,12 +43,12 @@ filename_t EncryptionConfig::ToFilenameString(const std::string& value) {
 filename_t EncryptionConfig::GenPath() {
 	filename_t basename;
 	filename_t ext;
-	std::tie(basename, ext) = details::file_helper::split_by_extension(m_filename);
-	return basename + SPDLOG_FILENAME_T(".") + ToFilenameString(m_iv) + ext;
+	std::tie(basename, ext) = details::file_helper::split_by_extension(filename_);
+	return basename + SPDLOG_FILENAME_T(".") + ToFilenameString(iv_) + ext;
 }
 
 std::string EncryptionConfig::GenIV() {
-	std::string iv(kAesCbcIvSize, '\0');
+	std::string iv(k_aes_cbc_iv_size, '\0');
 	if (RAND_bytes(reinterpret_cast<unsigned char*>(&iv[0]), static_cast<int>(iv.size())) != 1) {
 		throw spdlog_ex("failed to generate encryption iv");
 	}

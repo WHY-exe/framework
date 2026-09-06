@@ -15,7 +15,7 @@ SPDLOG_INLINE FileSinkEx<Mutex>::FileSinkEx(
 	const file_event_handlers& event_handlers,
 	bool					   encrypt_enable,
 	std::string				   encryption_key)
-	: FileSinkEx(truncate, event_handlers, EncryptionConfig::Make(std::move(encryption_key), std::move(filename), encrypt_enable)) {
+	: FileSinkEx(truncate, event_handlers, EncryptionConfig::Make(std::move(encryption_key), filename, encrypt_enable)) {
 }
 
 template <typename Mutex>
@@ -34,20 +34,20 @@ SPDLOG_INLINE void FileSinkEx<Mutex>::sink_it_(const details::log_msg& msg) {
 	memory_buf_t formatted;
 	base_sink<Mutex>::formatter_->format(msg, formatted);
 
-	memory_buf_t ouputBuf;
+	memory_buf_t ouput_buf;
 	if (aes_ != nullptr) {
-		auto inputSize = formatted.size();
-		ouputBuf.resize(AES::GetRequireBufferSize(inputSize));
+		auto input_size = formatted.size();
+		ouput_buf.resize(AES::GetRequireBufferSize(input_size));
 		auto ret = aes_->Encrypt(
-			gsl::span<const uint8_t>((uint8_t*)formatted.data(), inputSize), gsl::span<uint8_t>((uint8_t*)ouputBuf.data(), ouputBuf.size()));
+			gsl::span<const uint8_t>((uint8_t*)formatted.data(), input_size), gsl::span<uint8_t>((uint8_t*)ouput_buf.data(), ouput_buf.size()));
 		if (!ret) {
 			throw spdlog_ex("encryption failed");
 		}
-		ouputBuf.resize(ret->size());
+		ouput_buf.resize(ret->size());
 	} else {
-		ouputBuf = std::move(formatted);
+		ouput_buf = std::move(formatted);
 	}
-	basic_file_sink<Mutex>::to_file(std::move(ouputBuf));
+	basic_file_sink<Mutex>::to_file(std::move(ouput_buf));
 }
 
 template <typename Mutex>

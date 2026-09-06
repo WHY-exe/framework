@@ -3,7 +3,7 @@
 
 namespace spdlog {
 class EncryptionConfig {
-	static constexpr size_t kAesCbcIvSize = 16;
+	static constexpr size_t k_aes_cbc_iv_size = 16;
 
 public:
 	static EncryptionConfig Make(std::string key, filename_t filename, bool enabled);
@@ -12,8 +12,8 @@ public:
 	const std::string& GetKey() const;
 	const filename_t&  GetFileName() const;
 
-	operator bool() const noexcept {
-		return m_enable;
+	explicit operator bool() const noexcept {
+		return enable_;
 	}
 
 private:
@@ -24,9 +24,9 @@ private:
 	std::string GenPath();
 
 private:
-	filename_t	m_filename;
-	std::string m_iv;
-	std::string m_key;
-	bool		m_enable = false;
+	filename_t	filename_;
+	std::string iv_;
+	std::string key_;
+	bool		enable_ = false;
 };
 } //namespace spdlog

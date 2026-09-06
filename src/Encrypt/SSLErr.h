@@ -13,7 +13,7 @@ enum class errc {
 	invalid_context,
 };
 
-class openssl_error_category final : public boost::system::error_category {
+class OpensslErrorCategory final : public boost::system::error_category {
 public:
 	const char* name() const noexcept override {
 		return "openssl";
@@ -34,7 +34,7 @@ public:
 	}
 };
 
-class ssl_error_category final : public boost::system::error_category {
+class SslErrorCategory final : public boost::system::error_category {
 public:
 	const char* name() const noexcept override {
 		return "ssl";
@@ -55,12 +55,12 @@ public:
 };
 
 inline const boost::system::error_category& openssl_category() {
-	static openssl_error_category category;
+	static OpensslErrorCategory category;
 	return category;
 }
 
 inline const boost::system::error_category& ssl_category() {
-	static ssl_error_category category;
+	static SslErrorCategory category;
 	return category;
 }
 
