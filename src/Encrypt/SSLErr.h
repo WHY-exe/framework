@@ -7,7 +7,7 @@
 
 namespace sslerr {
 
-enum class errc {
+enum class Errc {
 	operation_failed = 1,
 	buffer_too_small,
 	invalid_context,
@@ -41,12 +41,12 @@ public:
 	}
 
 	std::string message(int value) const override {
-		switch (static_cast<errc>(value)) {
-			case errc::operation_failed:
+		switch (static_cast<Errc>(value)) {
+			case Errc::operation_failed:
 				return "SSL operation failed";
-			case errc::buffer_too_small:
+			case Errc::buffer_too_small:
 				return "SSL output buffer too small";
-			case errc::invalid_context:
+			case Errc::invalid_context:
 				return "SSL evp context invalid";
 			default:
 				return "unknown SSL error";
@@ -71,7 +71,7 @@ inline boost::system::error_code MakeEc(unsigned long openssl_error) {
 	};
 }
 
-inline boost::system::error_code MakeEc(errc error) {
+inline boost::system::error_code MakeEc(Errc error) {
 	return {
 		static_cast<int>(error),
 		ssl_category()
@@ -89,7 +89,7 @@ inline boost::system::error_code ConsumeError() {
 		return MakeEc(err);
 	}
 
-	return MakeEc(errc::operation_failed);
+	return MakeEc(Errc::operation_failed);
 }
 
 } // namespace sslerr
@@ -98,7 +98,7 @@ namespace boost {
 namespace system {
 
 template <>
-struct is_error_code_enum<sslerr::errc> {
+struct is_error_code_enum<sslerr::Errc> {
 	static const bool value = true;
 };
 
