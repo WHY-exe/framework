@@ -21,10 +21,10 @@ class AsyncChannel {
 
 public:
 	explicit AsyncChannel(const executor_type& ex, size_t maxSize)
-		: m_tmChanFull(ex)
-		, m_tmChanRecv(ex)
-		, m_maxSize(maxSize)
-		, m_close(false) {
+		: tmChanFull_(ex)
+		, tmChanRecv_(ex)
+		, maxSize_(maxSize)
+		, close_(false) {
 	}
 
 	template <class CompletionToken>
@@ -32,23 +32,23 @@ public:
 		using Signature = void(ErrorCode);
 		return asio::async_initiate<CompletionToken, Signature>(
 			[this, value = std::forward<T>(value)](auto&& handler) mutable {
-				if (m_queue.size() < m_maxSize) {
-					m_queue.push(std::forward<T>(value));
+				if (queue_.size() < maxSize_) {
+					queue_.push(std::forward<T>(value));
 					std::move(handler)({});
 					return;
 				}
-				m_tmChanFull.expires_at(asio::steady_timer::time_point::max());
-				m_tmChanFull.async_wait(
+				tmChanFull_.expires_at(asio::steady_timer::time_point::max());
+				tmChanFull_.async_wait(
 					[handler = std::forward<decltype(handler)>(handler), value = std::forward<T>(value), this](ErrorCode ec) mutable {
-						if (m_close) {
+						if (close_) {
 							std::move(handler)(ec);
 							return;
 						}
-						bool signalRecv = m_queue.empty();
-						m_queue.push(std::forward<T>(value));
+						bool signalRecv = queue_.empty();
+						queue_.push(std::forward<T>(value));
 						std::move(handler)({});
 						if (signalRecv) {
-							m_tmChanRecv.cancel();
+							tmChanRecv_.cancel();
 						}
 					});
 			},
@@ -60,23 +60,23 @@ public:
 		using Signature = void(ErrorCode, T);
 		return asio::async_initiate<CompletionToken, Signature>(
 			[this](auto&& handler) mutable {
-				if (!m_queue.empty()) {
-					auto value = PopValue(m_queue);
+				if (!queue_.empty()) {
+					auto value = PopValue(queue_);
 					std::move(handler)({}, std::move(value));
 					return;
 				}
-				m_tmChanRecv.expires_at(asio::steady_timer::time_point::max());
-				m_tmChanRecv.async_wait(
+				tmChanRecv_.expires_at(asio::steady_timer::time_point::max());
+				tmChanRecv_.async_wait(
 					[handler = std::forward<decltype(handler)>(handler), this](ErrorCode ec) mutable {
-						if (m_close) {
+						if (close_) {
 							std::move(handler)(ec, {});
 							return;
 						}
-						bool signalSend = m_queue.size() == m_maxSize;
-						auto value		= PopValue(m_queue);
+						bool signalSend = queue_.size() == maxSize_;
+						auto value		= PopValue(queue_);
 						std::move(handler)({}, std::move(value));
 						if (signalSend) {
-							m_tmChanFull.cancel();
+							tmChanFull_.cancel();
 						}
 					});
 			},
@@ -84,73 +84,73 @@ public:
 	}
 
 	void Close() {
-		asio::dispatch(m_exec, [this] {
-			m_close.exchange(true);
-			m_tmChanFull.cancel();
-			m_tmChanRecv.cancel();
-			m_queue.swap({});
+		asio::dispatch(exec_, [this] {
+			close_.exchange(true);
+			tmChanFull_.cancel();
+			tmChanRecv_.cancel();
+			queue_.swap({});
 		});
 	}
 
 private:
-	asio::steady_timer m_tmChanFull;
-	asio::steady_timer m_tmChanRecv;
-	executor_type	   m_exec;
-	std::queue<T>	   m_queue;
-	size_t			   m_maxSize;
-	std::atomic_bool   m_close;
+	asio::steady_timer tmChanFull_;
+	asio::steady_timer tmChanRecv_;
+	executor_type	   exec_;
+	std::queue<T>	   queue_;
+	size_t			   maxSize_;
+	std::atomic_bool   close_;
 };
 
 template <typename T, typename Executor>
 class MPSCChannel {
 public:
 	explicit MPSCChannel(size_t maxSize)
-		: m_maxSize(maxSize)
-		, m_close(false) {
+		: maxSize_(maxSize)
+		, close_(false) {
 	}
 
 	Result<void> Send(T&& value) {
-		if (m_close) {
+		if (close_) {
 			return MAKE_EC(boost::system::errc::make_error_code(boost::system::errc::operation_canceled));
 		}
-		std::unique_lock lk(m_mutex);
-		if (m_queue.size() >= m_maxSize) {
-			m_cvFul.wait(lk, [this] { return m_queue < m_maxSize; });
+		std::unique_lock lk(mutex_);
+		if (queue_.size() >= maxSize_) {
+			cvFul_.wait(lk, [this] { return queue_ < maxSize_; });
 		}
-		bool bEmpty = m_queue.empty();
-		m_queue.push(std::forward<T>(value));
+		bool bEmpty = queue_.empty();
+		queue_.push(std::forward<T>(value));
 		if (bEmpty) {
-			m_cvEmpty.notify_one();
+			cvEmpty_.notify_one();
 		}
 		return {};
 	}
 
 	Result<T> Recv() {
-		if (m_close) {
+		if (close_) {
 			return MAKE_EC(boost::system::errc::make_error_code(boost::system::errc::operation_canceled));
 		}
-		std::unique_lock lk(m_mutex);
-		if (m_queue.empty()) {
-			m_cvEmpty.wait(lk, [this] { return !m_queue.empty(); });
+		std::unique_lock lk(mutex_);
+		if (queue_.empty()) {
+			cvEmpty_.wait(lk, [this] { return !queue_.empty(); });
 		}
-		bool bFull = m_queue.size() >= m_maxSize;
-		auto ret = PopValue(m_queue);
+		bool bFull = queue_.size() >= maxSize_;
+		auto ret = PopValue(queue_);
 		if (bFull) {
-			m_cvFul.notify_all();
+			cvFul_.notify_all();
 		}
 		return ret;
 	}
 
 	void Close() {
-		m_close.exchange(true);
+		close_.exchange(true);
 	}
 
 private:
-	std::mutex				m_mutex;
-	std::condition_variable m_cvFul;
-	std::condition_variable m_cvEmpty;
-	std::queue<T>			m_queue;
-	size_t					m_maxSize;
-	std::atomic_bool		m_close;
+	std::mutex				mutex_;
+	std::condition_variable cvFul_;
+	std::condition_variable cvEmpty_;
+	std::queue<T>			queue_;
+	size_t					maxSize_;
+	std::atomic_bool		close_;
 };
 } //namespace misc
